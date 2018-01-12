@@ -337,10 +337,17 @@ if (HELLIGKEIT < HELLIGKEITREF ) //Wenn der Sensorwert über Parameter beträgt�
 {
 digitalWrite(LEDGELBAUS, HIGH); //…soll die LED leuchten…
 digitalWrite(LEDROTAUS, HIGH); //…soll die LED leuchten…
-AMMO = AMMO - 1; //Counter einen runter Zählen
-UpdateDisplay = 1;
+      if (AMMO < 1)
+      {
+        AMMO = 0;
+        UpdateDisplay = 1;
+      }
+      else
+      {
+        AMMO = AMMO - 1; //Counter einen runter Zählen
+        UpdateDisplay = 1;
+      }
 }
-
 else //andernfalls…
 {
 digitalWrite(LEDGELBAUS, LOW); //….soll sie nicht leuchten.
