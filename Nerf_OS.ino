@@ -1,6 +1,6 @@
 /* Nerf OS
-    Version 0.003
-    Datum 2018-01-22
+    Version 0.004
+    Datum 2018-01-24
 
 */
 
@@ -12,7 +12,7 @@
 //Definition Pins, Variablen und Parameter
 
 //Arduino Pins
-const int LEDGELBAUS = 13; //Gelbe LED
+const int LEDGELBAUS = 11; //Gelbe LED
 const int LEDROTAUS = 12; //Rote LED
 const int LAUF = A0; //Lichtschranke Lauf
 const int BATTERIE = A5; //Spannungsmesser Batterie
@@ -29,7 +29,7 @@ OneButton SCHALTER2(10, false); // Schalter 2
 LCD5110 myGLCD(7, 6, 5, 3, 4);
 
 //Allegemien Parameter und Variblen
-float Version = 0.003; // Version der Software
+float Version = 0.004; // Version der Software
 unsigned long currentTime = millis(); // Zeitstempel des Durchlaufs - Aktuelle Zeit
 
 
@@ -60,6 +60,23 @@ const float resistorFactor = 1023.0 * (RB / (RA + RB)); // Widerstandsfaktor Spa
 long MessungVolt = 10000; // Millisekunden bis zur nächsten Voltmessung
 unsigned long lasttimeVolt = 0; //Zeitstempel des letzten Durchlaufs der Voltmessung
 
+//Parameter für die LEDsRot
+unsigned long lasttimeRot=0; //Zeitstempel des Durchlaufs LED Rot an
+unsigned long lasttimeWarteRot=0; //Zeitstempel des Durchlaufs LED Rot aus
+unsigned long previousMillisRot = 0; // Zeitstempel für den letzen Durchlauf Rote LEDs
+long WarteRot = 500; // Warten zwischen dem Blinken
+long IntervalRot = 500; // Dauer des Blinkens
+int BlinkRot = LOW;
+
+
+//Parameter für die LEDsGelb
+unsigned long lasttimeGelb=0; //Zeitstempel des Durchlaufs LED Rot an
+unsigned long lasttimeWarteGelb=0; //Zeitstempel des Durchlaufs LED Rot aus
+unsigned long previousMillisGelb = 0; // Zeitstempel für den letzen Durchlauf Rote LEDs
+long WarteGelb = 500; // Warten zwischen dem Blinken
+long IntervalGelb = 500; // Dauer des Blinkens
+int BlinkGelb = LOW;
+float WarnungGelb = 0.35;
 
 // Einbindung von Bildern und Schriften für das Display
 extern uint8_t SmallFont[]; // Einbinden der kleinen Schrift
@@ -138,11 +155,77 @@ void loop() {
   {
     AnzeigeNeu();
   }
-
-
+  LEDRot();
+  LEDGelb();
   //Debug(); ///Serielle Ausgabe für Infos
 
 }
+
+void LEDGelb()
+ {
+  if (AMMO <= ((Display[4] * 10) + Display[5]) * WarnungGelb )
+      {
+      if(BlinkGelb == HIGH && currentTime - previousMillisGelb > IntervalGelb ) 
+          {
+           previousMillisGelb = currentTime; 
+           BlinkGelb = LOW;
+           digitalWrite(LEDGELBAUS, BlinkGelb);
+          }
+         if(BlinkGelb == LOW && currentTime - previousMillisGelb > WarteGelb) 
+          {
+           previousMillisGelb = currentTime; 
+           BlinkGelb = HIGH;
+           digitalWrite(LEDGELBAUS, BlinkGelb);
+          }
+      }
+  if (AMMO <= 1)
+      {    
+        digitalWrite(LEDGELBAUS, LOW);
+        }
+          
+  if (Leer != 1 && AMMO > ((Display[4] * 10) + Display[5]) * WarnungGelb) 
+    {
+       digitalWrite(LEDGELBAUS, LOW); //….soll sie nicht leuchten.;
+    }
+  if (((Display[4] * 10) + Display[5]) == 0) 
+    {
+       digitalWrite(LEDGELBAUS, LOW); //….soll sie nicht leuchten.;
+    }
+ }
+
+
+
+void LEDRot()
+ {
+  if (AMMO == 1 && ((Display[4] * 10) + Display[5]) != 0 )
+      { 
+        if(BlinkRot == HIGH && currentTime - previousMillisRot > IntervalRot ) 
+          {
+           previousMillisRot = currentTime; 
+           BlinkRot = LOW;
+           digitalWrite(LEDROTAUS, BlinkRot);
+          }
+         if(BlinkRot == LOW && currentTime - previousMillisRot > WarteRot) 
+          {
+           previousMillisRot = currentTime; 
+           BlinkRot = HIGH;
+           digitalWrite(LEDROTAUS, BlinkRot);
+          }
+        }
+  if (Leer == 1)
+      {  
+        digitalWrite(LEDROTAUS, HIGH);
+        }
+          
+  if (Leer != 1 && AMMO !=1) 
+    {
+     digitalWrite(LEDROTAUS, LOW); //….soll sie nicht leuchten.;
+    }
+  
+ }
+
+
+
 
 void CheckLauf() //Prüfe ob Geschossen wird
 {
@@ -150,14 +233,7 @@ void CheckLauf() //Prüfe ob Geschossen wird
 
   if (HELLIGKEIT < HELLIGKEITREF ) //Wenn der Sensorwert über Parameter beträgt….
   {
-    digitalWrite(LEDGELBAUS, HIGH); //…soll die LED leuchten…
-    digitalWrite(LEDROTAUS, HIGH); //…soll die LED leuchten…
     CalcAmmo();
-  }
-  else //andernfalls…
-  {
-    digitalWrite(LEDGELBAUS, LOW); //….soll sie nicht leuchten.
-    digitalWrite(LEDROTAUS, LOW); //….soll sie nicht leuchten.
   }
 }
 
@@ -190,6 +266,10 @@ void CalcAmmo()
       {
         Clearcounter = 1;
       }
+      if (AMMO == 0) //Beim Wechsel von 2 auf eine Stelle wird einmal die Anzeige geleert
+      {
+        Leer = 1;
+      }
     }
   }
   UpdateDisplay = 1;
@@ -205,6 +285,7 @@ void CheckMag()
     Clearcounter = 1;
     AMMO = (Display[4] * 10) + Display[5];
     DrinAlt = Drin;
+    Leer = 0;
   }
 }
 
@@ -262,7 +343,6 @@ void AnzeigeNeu() //Aktuallisierung des Displays
 }
 
 void click1() {
-  Serial.println("Button 1 click.");
   Mag = Mag + 1; // Maginzart wechseln
   if (Mag > (sizeof(Magtyp) / sizeof(int) - 1)) // Umbruch des Arrays
   {
@@ -272,10 +352,15 @@ void click1() {
   AMMO = (Display[4] * 10) + Display[5];
   Clearcounter = 1;
   UpdateDisplay = 1;
+  Leer = 0;
 }
 void click2() {
-  Serial.println("Button 2 click.");
-} // click2
+  CalcAmmo();
+  Serial.print("Ammo = ");
+  Serial.println(AMMO);
+  Serial.print("Leer = ");
+  Serial.println(Leer);
+} 
 
 
 void doubleclick2() {
@@ -352,6 +437,8 @@ void Debug() // Ausgabe aller Wert im SerialMonitor
   Serial.println(Mag);
   Serial.print("Ammo = ");
   Serial.println(AMMO);
+  Serial.print("Warnung ab ");
+  Serial.println((((Display[4] * 10) + Display[5]) * WarnungGelb ));
   Serial.print("Ammo Kalk = ");
   Serial.println((Display[4] * 10) + Display[5]);
   Serial.print("Dispaly Array = ");
@@ -374,7 +461,11 @@ void Debug() // Ausgabe aller Wert im SerialMonitor
   Serial.print(Display[8]);
   Serial.print(";");
   Serial.println(Display[9]);
-  delay(1000);
+  Serial.print("Leer = ");
+  Serial.println(Leer);
+  Serial.print("BlinkRot = ");
+  Serial.println(BlinkRot);
+  //delay(100);
 
 }
 
