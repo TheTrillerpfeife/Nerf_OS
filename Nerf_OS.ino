@@ -1,6 +1,6 @@
 /* Nerf OS
-    Version 0.004
-    Datum 2018-01-24
+    Version 0.005
+    Datum 2018-01-27
 
 */
 
@@ -29,7 +29,7 @@ OneButton SCHALTER2(10, false); // Schalter 2
 LCD5110 myGLCD(7, 6, 5, 3, 4);
 
 //Allegemien Parameter und Variblen
-float Version = 0.004; // Version der Software
+float Version = 0.005; // Version der Software
 unsigned long currentTime = millis(); // Zeitstempel des Durchlaufs - Aktuelle Zeit
 
 
@@ -66,8 +66,7 @@ unsigned long lasttimeWarteRot=0; //Zeitstempel des Durchlaufs LED Rot aus
 unsigned long previousMillisRot = 0; // Zeitstempel für den letzen Durchlauf Rote LEDs
 long WarteRot = 500; // Warten zwischen dem Blinken
 long IntervalRot = 500; // Dauer des Blinkens
-int BlinkRot = LOW;
-
+int BlinkRot = LOW; //Status der LED Low oder High
 
 //Parameter für die LEDsGelb
 unsigned long lasttimeGelb=0; //Zeitstempel des Durchlaufs LED Rot an
@@ -75,8 +74,8 @@ unsigned long lasttimeWarteGelb=0; //Zeitstempel des Durchlaufs LED Rot aus
 unsigned long previousMillisGelb = 0; // Zeitstempel für den letzen Durchlauf Rote LEDs
 long WarteGelb = 500; // Warten zwischen dem Blinken
 long IntervalGelb = 500; // Dauer des Blinkens
-int BlinkGelb = LOW;
-float WarnungGelb = 0.35;
+int BlinkGelb = LOW; //Status der LED Low oder High
+float WarnungGelb = 0.35; // Wert Restmunition in Prozent ab dem die gelbe LED blinkt
 
 // Einbindung von Bildern und Schriften für das Display
 extern uint8_t SmallFont[]; // Einbinden der kleinen Schrift
@@ -85,11 +84,10 @@ extern unsigned char MediumNumbers[]; // Einbinden der mittlere Zahlen
 extern unsigned char BigNumbers[]; // Einbinden der große Zahlen
 extern uint8_t NerfLogo[]; //Nerflogobild
 
-
-void setup() {
-
-
-  //PinMode
+//Setup läuft einmalig vor dem Loop
+void setup()
+{
+  //PinModes des Arduino setzen
   pinMode(LEDGELBAUS, OUTPUT);
   pinMode(LEDROTAUS, OUTPUT);
   pinMode(LAUF, INPUT);
@@ -113,16 +111,6 @@ void setup() {
   myGLCD.clrScr();
   myGLCD.update();
 
-  // Male den Umriss der Batterie
-  myGLCD.drawRect(59, 0, 81, 9);
-  myGLCD.drawRect(82, 2, 83, 7);
-  myGLCD.update();
-
-  // Auffüllen der Linien um die invertierte Zahl
-  myGLCD.drawLine(1, 18, 14, 18);
-  myGLCD.drawLine(14, 18, 14, 27);
-  myGLCD.drawLine(7, 18, 7, 27);
-
   // Initialisierung der Schalters 1 mit der Funktion Click
   SCHALTER1.attachClick(click1);
 
@@ -132,11 +120,11 @@ void setup() {
   SCHALTER2.attachLongPressStart(longPressStart2);
   SCHALTER2.attachLongPressStop(longPressStop2);
   SCHALTER2.attachDuringLongPress(longPress2);
-
-
 }
 
-void loop() {
+// Loop Funktiom
+void loop() 
+{
 
   currentTime = millis(); //Zeitstempel für den Durchlauf
 
@@ -155,99 +143,104 @@ void loop() {
   {
     AnzeigeNeu();
   }
-  LEDRot();
-  LEDGelb();
-  //Debug(); ///Serielle Ausgabe für Infos
+  LEDRot(); //Aufruf der Routine für die Rote LED
+  LEDGelb(); //Aufruf der Routine für die Gelbe LED
+  
+  
+  //Debug(); ///Serielle Ausgabe für Infos im Standard auskommentiert, da sehr Performance lastig
+
 
 }
 
+
+// Routine für die Gelbe LED
 void LEDGelb()
  {
-  if (AMMO <= ((Display[4] * 10) + Display[5]) * WarnungGelb )
+  if (AMMO <= ((Display[4] * 10) + Display[5]) * WarnungGelb ) // Löst aus, wenn Restmunition unter dem Schwellwert
       {
-      if(BlinkGelb == HIGH && currentTime - previousMillisGelb > IntervalGelb ) 
+      if(BlinkGelb == HIGH && currentTime - previousMillisGelb > IntervalGelb ) // Gelb an und dauer für an erreicht
           {
            previousMillisGelb = currentTime; 
            BlinkGelb = LOW;
            digitalWrite(LEDGELBAUS, BlinkGelb);
           }
-         if(BlinkGelb == LOW && currentTime - previousMillisGelb > WarteGelb) 
+         if(BlinkGelb == LOW && currentTime - previousMillisGelb > WarteGelb) // Gelb aus und dauer für Pause erreicht
           {
            previousMillisGelb = currentTime; 
            BlinkGelb = HIGH;
            digitalWrite(LEDGELBAUS, BlinkGelb);
           }
       }
-  if (AMMO <= 1)
+  if (AMMO <= 1)  // LED aus, wenn Funktionsbereich der Roten LED erreicht
       {    
         digitalWrite(LEDGELBAUS, LOW);
         }
           
-  if (Leer != 1 && AMMO > ((Display[4] * 10) + Display[5]) * WarnungGelb) 
+  if (Leer != 1 && AMMO > ((Display[4] * 10) + Display[5]) * WarnungGelb) //LED aus wenn Magazin nicht leer und Munition > Schwellwert 
     {
-       digitalWrite(LEDGELBAUS, LOW); //….soll sie nicht leuchten.;
+       digitalWrite(LEDGELBAUS, LOW); 
     }
-  if (((Display[4] * 10) + Display[5]) == 0) 
+  if (((Display[4] * 10) + Display[5]) == 0)  // Hochzählmodus aktiv -> LED aus
     {
-       digitalWrite(LEDGELBAUS, LOW); //….soll sie nicht leuchten.;
+       digitalWrite(LEDGELBAUS, LOW); 
     }
  }
 
 
-
+//Routine für die Rote LED
 void LEDRot()
  {
-  if (AMMO == 1 && ((Display[4] * 10) + Display[5]) != 0 )
+  if (AMMO == 1 && ((Display[4] * 10) + Display[5]) != 0 )  // Restmunition = 1 und Hochzählmodus nicht aktiv
       { 
-        if(BlinkRot == HIGH && currentTime - previousMillisRot > IntervalRot ) 
+        if(BlinkRot == HIGH && currentTime - previousMillisRot > IntervalRot ) // Rot an und dauer für an erreicht
           {
            previousMillisRot = currentTime; 
            BlinkRot = LOW;
            digitalWrite(LEDROTAUS, BlinkRot);
           }
-         if(BlinkRot == LOW && currentTime - previousMillisRot > WarteRot) 
+         if(BlinkRot == LOW && currentTime - previousMillisRot > WarteRot) // Rot aus und dauer für Pause erreicht
           {
            previousMillisRot = currentTime; 
            BlinkRot = HIGH;
            digitalWrite(LEDROTAUS, BlinkRot);
           }
         }
-  if (Leer == 1)
+  if (Leer == 1) // Rot an, wenn Magazin leer
       {  
         digitalWrite(LEDROTAUS, HIGH);
         }
           
-  if (Leer != 1 && AMMO !=1) 
+  if (Leer != 1 && AMMO !=1) //Rot aus, wenn Magazin nicht leer und Munition <>1
     {
-     digitalWrite(LEDROTAUS, LOW); //….soll sie nicht leuchten.;
+     digitalWrite(LEDROTAUS, LOW); 
     }
   
  }
 
 
 
-
-void CheckLauf() //Prüfe ob Geschossen wird
+//Prüfe ob Geschossen wird
+void CheckLauf() 
 {
   HELLIGKEIT = analogRead(LAUF);
 
   if (HELLIGKEIT < HELLIGKEITREF ) //Wenn der Sensorwert über Parameter beträgt….
   {
-    CalcAmmo();
+    CalcAmmo();  //Berechnung Restmunition
   }
 }
 
-
+// Berechnung Restmunition
 void CalcAmmo()
 {
-  if ( (Display[4] * 10) + Display[5] == 0)
+  if ( (Display[4] * 10) + Display[5] == 0) // Hochzählmodus aktiv
   {
-    if(AMMO >=999)
+    if(AMMO >=99) //Max 99
     {
-    AMMO = 999;
+    AMMO = 99;
     Leer = 1;  
     }
-    else
+    else //Zähle um 1 hoch
     {
     AMMO = AMMO + 1;  
     }
@@ -272,10 +265,10 @@ void CalcAmmo()
       }
     }
   }
-  UpdateDisplay = 1;
+  UpdateDisplay = 1; //Display neu schreiben
 }
 
-
+// Prüfe ob Magazin verändert
 void CheckMag()
 {
   Drin = digitalRead(MAGAZIN);
@@ -289,21 +282,33 @@ void CheckMag()
   }
 }
 
-
-void AnzeigeNeu() //Aktuallisierung des Displays
+//Aktuallisierung des Displays aktuell eckiges Design
+void AnzeigeNeu() 
 {
   if (Clearcounter == 1)
   {
     myGLCD.setFont(TinyFont);
-    myGLCD.print("    ", 63, 2);
+    myGLCD.print("    ", 67, 0);
+
+// 2er Löschblock    
     myGLCD.setFont(BigNumbers);
-    myGLCD.print("...", CENTER, 13);
-    myGLCD.clrRect(26, 34, 27, 36);
-    myGLCD.clrRect(28, 34, 29, 36);
-    myGLCD.clrRect(40, 34, 41, 36);
-    myGLCD.clrRect(42, 34, 43, 36);
-    myGLCD.clrRect(54, 34, 55, 36);
-    myGLCD.clrRect(56, 34, 57, 36);
+    myGLCD.print("..", CENTER, 4);
+    myGLCD.clrRect(33, 25, 34, 27);
+    myGLCD.clrRect(35, 25, 36, 27);
+    myGLCD.clrRect(47, 25, 48, 27);
+    myGLCD.clrRect(49, 25, 50, 27);
+
+// 3er Löschblock
+//    myGLCD.setFont(BigNumbers);
+//    myGLCD.print("...", CENTER, 13);
+//    myGLCD.clrRect(26, 34, 27, 36);
+//    myGLCD.clrRect(28, 34, 29, 36);
+//    myGLCD.clrRect(40, 34, 41, 36);
+//    myGLCD.clrRect(42, 34, 43, 36);
+//    myGLCD.clrRect(54, 34, 55, 36);
+//    myGLCD.clrRect(56, 34, 57, 36);
+
+
     myGLCD.update();
     Clearcounter = 0;
   }
@@ -311,37 +316,150 @@ void AnzeigeNeu() //Aktuallisierung des Displays
   if (Drin == 0)
   {
     myGLCD.setFont(BigNumbers);
-    myGLCD.print("--", CENTER, 13);
+    myGLCD.print("--", CENTER, 4);
   }
   else
   {
     myGLCD.setFont(BigNumbers);
-    myGLCD.printNumI(AMMO, CENTER, 13);
+    myGLCD.printNumI(AMMO, CENTER, 4);
   }
   myGLCD.setFont(TinyFont);
-  myGLCD.printNumF(VOLT, 1, 63, 2);
-  myGLCD.printNumI(Display[0], 3, 0);
-  myGLCD.printNumI(Display[1], 10, 0);
-  myGLCD.printNumI(Display[8], 3, 42);
-  myGLCD.printNumI(Display[9], 10, 42);
+  myGLCD.printNumF(VOLT, 1, 67, 0);
+  myGLCD.printNumI(Display[0], 0, 42);
+  myGLCD.printNumI(Display[1], 5, 42);
+  myGLCD.printNumI(Display[8], 75, 42);
+  myGLCD.printNumI(Display[9], 80, 42);
 
-  myGLCD.setFont(SmallFont);
-  myGLCD.printNumI(Display[2], 1, 8);
-  myGLCD.printNumI(Display[3], 8, 8);
-  myGLCD.printNumI(Display[6], 1, 31);
-  myGLCD.printNumI(Display[7], 8, 31);
+  myGLCD.printNumI(Display[2], 20, 37);
+  myGLCD.printNumI(Display[3], 25, 37);
+  myGLCD.printNumI(Display[6], 55, 37);
+  myGLCD.printNumI(Display[7], 60, 37);
 
+  myGLCD.setFont(MediumNumbers);
+  //myGLCD.invertText(true);
+  myGLCD.printNumI(Display[4], 30, 30);
+  myGLCD.printNumI(Display[5], 42, 30);
+  // myGLCD.invertText(false);
 
-  myGLCD.setFont(SmallFont);
-  myGLCD.invertText(true);
-  myGLCD.printNumI(Display[4], 1, 19);
-  myGLCD.printNumI(Display[5], 8, 19);
-  myGLCD.invertText(false);
+//Aufbau Bildschirm für eckiges Design
+    myGLCD.drawLine(0,6,18,6);
+    myGLCD.drawLine(18,6,21,3);
+    myGLCD.drawLine(19,9,28,0);
+    myGLCD.drawLine(29,0,55,0);
+    myGLCD.drawLine(55,0,64,9);
+    myGLCD.drawLine(62,3,65,6);
+    myGLCD.drawLine(65,6,83,6);
+    
+    myGLCD.drawLine(0,40,9,40);
+    myGLCD.drawLine(9,40,13,44);
+    myGLCD.drawLine(83,40,74,40);
+    myGLCD.drawLine(74,40,70,44);
+    
+    myGLCD.drawLine(14,41,19,46);
+    myGLCD.drawLine(14,41,20,35);
+    myGLCD.drawLine(64,46,69,41);
+    myGLCD.drawLine(69,41,63,35);
+
+    myGLCD.drawLine(23,44,28,44);
+    myGLCD.drawLine(28,44,31,47);
+    myGLCD.drawLine(31,47,52,47);
+    myGLCD.drawLine(52,47,55,44);
+    myGLCD.drawLine(55,44,60,44);
 
   myGLCD.update();
   UpdateDisplay = 0;
+
+/// Start Rundes design
+//  if (Drin == 0)
+//  {
+//    myGLCD.setFont(BigNumbers);
+//    myGLCD.print("--", CENTER, 12);
+//  }
+//  else
+//  {
+//    myGLCD.setFont(BigNumbers);
+//    myGLCD.printNumI(AMMO, CENTER, 12);
+//  }
+// Kreise
+//  myGLCD.drawCircle(42,24,41);
+//  myGLCD.drawCircle(42,24,28);
+//  myGLCD.drawCircle(42,24,15);
+//  myGLCD.drawCircle(42,24,22);
+// Linie  Invertierte Zahl
+//  myGLCD.drawLine(2,20,14,20);
+//
+// Magazine
+// myGLCD.setFont(TinyFont);
+// myGLCD.printNumI(Display[0], 12, 0);
+// myGLCD.printNumI(Display[1], 17, 0);
+// myGLCD.printNumI(Display[8], 12, 43);
+// myGLCD.printNumI(Display[9], 17, 43);
+//
+// myGLCD.printNumI(Display[2], 6, 11);
+// myGLCD.printNumI(Display[3], 11, 11);
+// myGLCD.printNumI(Display[6], 6, 32);
+// myGLCD.printNumI(Display[7], 11, 32);
+//
+//
+//  myGLCD.setFont(SmallFont);
+//  myGLCD.invertText(true);
+//  myGLCD.printNumI(Display[4], 2, 21);
+//  myGLCD.printNumI(Display[5], 8, 21);
+//  myGLCD.invertText(false);
+//
+// Pfeile malen
+//  Pfeil(66, 0, 0);
+//  Pfeil(70, 6 ,0);
+//  Pfeil(72, 12 ,0);
+//  Pfeil(73, 18, 1);
+//  Pfeil(73, 24, 1); 
+//  Pfeil(72, 30 ,1); 
+//  Pfeil(70, 36, 1); 
+//  Pfeil(66, 42, 1);
+//  myGLCD.update();
+///// Ende Rundes Design
+
 }
 
+
+// Funktion zum Malen der Pfeile - Pfeil ist 8 Breit und 6 Hoch - Start in linker oberer Ecke
+//
+//    0 1 2 3 4 5 6 7 
+//  0       x x       0
+//  1     x     x     1
+//  2   x         x   2
+//  3 x     x x     x 3
+//  4 x   x     x   x 4
+//  5 x x         x x 5
+//    0 1 2 3 4 5 6 7
+//
+void Pfeil(int A, int B, int V) // A = X-Koordinate B = Y-Koordinate C = 1 = Voll / 0 = Leer
+{
+  if(V == 0) // leerer Pfeil
+  {
+    myGLCD.drawLine(A+0,B+3,A+3,B+0);
+    myGLCD.drawLine(A+4,B+0,A+7,B+3);
+    myGLCD.drawLine(A+0,B+3,A+0,B+5);
+    myGLCD.drawLine(A+7,B+3,A+7,B+5);
+    myGLCD.drawLine(A+1,B+5,A+3,B+3);
+    myGLCD.drawLine(A+4,B+3,A+6,B+5);
+  }
+  if(V== 1) // Voller Pfeil
+  {
+    myGLCD.drawLine(A+3,B+0,A+0,B+3);
+    myGLCD.drawLine(A+4,B+0,A+7,B+3);
+    myGLCD.drawLine(A+3,B+1,A+0,B+4);
+    myGLCD.drawLine(A+4,B+1,A+7,B+4);
+    myGLCD.drawLine(A+3,B+2,A+0,B+5);
+    myGLCD.drawLine(A+4,B+2,A+7,B+5);
+    myGLCD.drawLine(A+3,B+3,A+1,B+5);
+    myGLCD.drawLine(A+4,B+3,A+6,B+5);
+  }
+}
+
+
+
+// Button 1 wird geklickt - > Magazinartwechsel
 void click1() {
   Mag = Mag + 1; // Maginzart wechseln
   if (Mag > (sizeof(Magtyp) / sizeof(int) - 1)) // Umbruch des Arrays
@@ -349,17 +467,16 @@ void click1() {
     Mag = 0;
   }
   MagDisplayRead(); //Befüllen des Arrays für das Display über die Funktion
-  AMMO = (Display[4] * 10) + Display[5];
-  Clearcounter = 1;
+  AMMO = (Display[4] * 10) + Display[5]; //Setze Munition = Kapazität Magazin
+  Clearcounter = 1; 
   UpdateDisplay = 1;
   Leer = 0;
 }
-void click2() {
+
+// Button 2 Klick -> Schuss
+void click2() 
+{
   CalcAmmo();
-  Serial.print("Ammo = ");
-  Serial.println(AMMO);
-  Serial.print("Leer = ");
-  Serial.println(Leer);
 } 
 
 
@@ -383,9 +500,8 @@ void longPressStop2() {
 
 
 
-
-
-void MagDisplayRead() // Auslesen des Arrays für die 5 Magazine die auf dem Display angezeigt werden
+// Auslesen des Arrays für die 5 Magazine die auf dem Display angezeigt werden
+void MagDisplayRead() 
 { int n = 0; //Variable zur Befüllung des Display Arrays
   for (int i = Mag; i < Mag + 5; i = i + 1) // Schleife zur Befüllung des Display Array
   {
@@ -406,8 +522,8 @@ void MagDisplayRead() // Auslesen des Arrays für die 5 Magazine die auf dem Dis
 }
 
 
-
-void ReadVoltage() // Auslesen der Batteriespannung und Fehlmessungen auf 0 Volt setzten
+// Auslesen der Batteriespannung und Fehlmessungen auf 0 Volt setzten
+void ReadVoltage() 
 {
   int VOLTI = analogRead(BATTERIE);
   float VOLTO = (VOLTI / resistorFactor) * referenceVolts ;
