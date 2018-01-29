@@ -1,5 +1,5 @@
 /* Nerf OS
-    Version 0.005
+    Version 0.006
     Datum 2018-01-27
 
 */
@@ -29,7 +29,7 @@ OneButton SCHALTER2(10, false); // Schalter 2
 LCD5110 myGLCD(7, 6, 5, 3, 4);
 
 //Allegemien Parameter und Variblen
-float Version = 0.005; // Version der Software
+float Version = 0.006; // Version der Software
 unsigned long currentTime = millis(); // Zeitstempel des Durchlaufs - Aktuelle Zeit
 
 
@@ -285,6 +285,9 @@ void CheckMag()
 //Aktuallisierung des Displays aktuell eckiges Design
 void AnzeigeNeu() 
 {
+
+int ACZeile = 3; // Y Koordinate für den AmmoCounter
+  
   if (Clearcounter == 1)
   {
     myGLCD.setFont(TinyFont);
@@ -292,21 +295,21 @@ void AnzeigeNeu()
 
 // 2er Löschblock    
     myGLCD.setFont(BigNumbers);
-    myGLCD.print("..", CENTER, 4);
-    myGLCD.clrRect(33, 25, 34, 27);
-    myGLCD.clrRect(35, 25, 36, 27);
-    myGLCD.clrRect(47, 25, 48, 27);
-    myGLCD.clrRect(49, 25, 50, 27);
+    myGLCD.print("..", CENTER, ACZeile);
+    myGLCD.clrRect(33, ACZeile+21, 34, ACZeile+23);
+    myGLCD.clrRect(35, ACZeile+21, 36, ACZeile+23);
+    myGLCD.clrRect(47, ACZeile+21, 48, ACZeile+23);
+    myGLCD.clrRect(49, ACZeile+21, 50, ACZeile+23);
 
 // 3er Löschblock
 //    myGLCD.setFont(BigNumbers);
-//    myGLCD.print("...", CENTER, 13);
-//    myGLCD.clrRect(26, 34, 27, 36);
-//    myGLCD.clrRect(28, 34, 29, 36);
-//    myGLCD.clrRect(40, 34, 41, 36);
-//    myGLCD.clrRect(42, 34, 43, 36);
-//    myGLCD.clrRect(54, 34, 55, 36);
-//    myGLCD.clrRect(56, 34, 57, 36);
+//    myGLCD.print("...", CENTER, ACZeile);
+//    myGLCD.clrRect(26, ACZeile+21, 27, ACZeile+23);
+//    myGLCD.clrRect(28, ACZeile+21, 29, ACZeile+23);
+//    myGLCD.clrRect(40, ACZeile+21, 41, ACZeile+23);
+//    myGLCD.clrRect(42, ACZeile+21, 43, ACZeile+23);
+//    myGLCD.clrRect(54, ACZeile+21, 55, ACZeile+23);
+//    myGLCD.clrRect(56, ACZeile+21, 57, ACZeile+23);
 
 
     myGLCD.update();
@@ -316,12 +319,12 @@ void AnzeigeNeu()
   if (Drin == 0)
   {
     myGLCD.setFont(BigNumbers);
-    myGLCD.print("--", CENTER, 4);
+    myGLCD.print("--", CENTER, ACZeile);
   }
   else
   {
     myGLCD.setFont(BigNumbers);
-    myGLCD.printNumI(AMMO, CENTER, 4);
+    myGLCD.printNumI(AMMO, CENTER, ACZeile);
   }
   myGLCD.setFont(TinyFont);
   myGLCD.printNumF(VOLT, 1, 67, 0);
@@ -373,12 +376,12 @@ void AnzeigeNeu()
 //  if (Drin == 0)
 //  {
 //    myGLCD.setFont(BigNumbers);
-//    myGLCD.print("--", CENTER, 12);
+//    myGLCD.print("--", CENTER, ACZeile);
 //  }
 //  else
 //  {
 //    myGLCD.setFont(BigNumbers);
-//    myGLCD.printNumI(AMMO, CENTER, 12);
+//    myGLCD.printNumI(AMMO, CENTER, ACZeile);
 //  }
 // Kreise
 //  myGLCD.drawCircle(42,24,41);
