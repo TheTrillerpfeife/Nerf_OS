@@ -312,7 +312,7 @@ int ACZeile = 3; // Y Koordinate für den AmmoCounter
 //    myGLCD.clrRect(56, ACZeile+21, 57, ACZeile+23);
 
 
-    myGLCD.update();
+    //myGLCD.update();
     Clearcounter = 0;
   }
 
