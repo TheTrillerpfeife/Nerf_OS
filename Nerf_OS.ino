@@ -84,6 +84,22 @@ extern unsigned char MediumNumbers[]; // Einbinden der mittlere Zahlen
 extern unsigned char BigNumbers[]; // Einbinden der große Zahlen
 extern uint8_t NerfLogo[]; //Nerflogobild
 
+//Parameter für den Displaymodus wechsel
+int Displaymodi = 3; // Anzahl an verschiedener Diyplaymodi 1=Eckiger Displaymodus; 2=Runder Displaymodus; 3=DebugDisplay
+int Displaymod = 1;
+
+//Parameter für die Batteriepfeile im Runden Displaymodus
+const float Batteriemin = 7.2;
+const float Batteriemax = 8.4;
+float Batteriedifferenz = 0;
+float Pfeilbatteriegroesse = 0;
+float Pfeilgroesse = 0;
+int XBatteriePfeil[8] = {66, 70, 72, 73, 73, 72, 70, 66};
+int YBatteriePfeil[8] = {42, 36, 30, 24, 18, 12, 6, 0};
+int Batti = 0;
+
+
+
 //Setup läuft einmalig vor dem Loop
 void setup()
 {
@@ -147,7 +163,7 @@ void loop()
   LEDGelb(); //Aufruf der Routine für die Gelbe LED
   
   
-  //Debug(); ///Serielle Ausgabe für Infos im Standard auskommentiert, da sehr Performance lastig
+  //  Debug(); ///Serielle Ausgabe für Infos im Standard auskommentiert, da sehr Performance lastig
 
 
 }
@@ -285,7 +301,10 @@ void CheckMag()
 //Aktuallisierung des Displays aktuell eckiges Design
 void AnzeigeNeu() 
 {
-  if (Clearcounter == 1)
+  //Abfrage nach dem gewünschten Diplaymodus
+  if (Displaymod == 1) //Eckiger Displaymodus
+  {
+    if (Clearcounter == 1)
   {
     myGLCD.setFont(TinyFont);
     myGLCD.print("    ", 67, 0);
@@ -317,9 +336,7 @@ void AnzeigeNeu()
   {
     myGLCD.setFont(BigNumbers);
     myGLCD.print("--", CENTER, 4);
-  }
-  else
-  {
+  }else{
     myGLCD.setFont(BigNumbers);
     myGLCD.printNumI(AMMO, CENTER, 4);
   }
@@ -369,55 +386,51 @@ void AnzeigeNeu()
   myGLCD.update();
   UpdateDisplay = 0;
 
-/// Start Rundes design
-//  if (Drin == 0)
-//  {
-//    myGLCD.setFont(BigNumbers);
-//    myGLCD.print("--", CENTER, 12);
-//  }
-//  else
-//  {
-//    myGLCD.setFont(BigNumbers);
-//    myGLCD.printNumI(AMMO, CENTER, 12);
-//  }
-// Kreise
-//  myGLCD.drawCircle(42,24,41);
-//  myGLCD.drawCircle(42,24,28);
-//  myGLCD.drawCircle(42,24,15);
-//  myGLCD.drawCircle(42,24,22);
+  //Abfrage nach dem gewünschten Diplaymodus
+  }if (Displaymod == 2)// Runder Displaymodus
+  
+  { 
+    
+    // Start Rundes design
+  if (Drin == 0)
+  {
+    myGLCD.setFont(BigNumbers);
+    myGLCD.print("--", CENTER, 12);
+  }
+  else
+  {
+    myGLCD.setFont(BigNumbers);
+    myGLCD.printNumI(AMMO, CENTER, 12);
+  }
+ //Kreise
+  myGLCD.drawCircle(42,24,41);
+  myGLCD.drawCircle(42,24,28);
+  myGLCD.drawCircle(42,24,15);
+  myGLCD.drawCircle(42,24,22);
 // Linie  Invertierte Zahl
-//  myGLCD.drawLine(2,20,14,20);
-//
-// Magazine
-// myGLCD.setFont(TinyFont);
-// myGLCD.printNumI(Display[0], 12, 0);
-// myGLCD.printNumI(Display[1], 17, 0);
-// myGLCD.printNumI(Display[8], 12, 43);
-// myGLCD.printNumI(Display[9], 17, 43);
-//
-// myGLCD.printNumI(Display[2], 6, 11);
-// myGLCD.printNumI(Display[3], 11, 11);
-// myGLCD.printNumI(Display[6], 6, 32);
-// myGLCD.printNumI(Display[7], 11, 32);
-//
-//
-//  myGLCD.setFont(SmallFont);
-//  myGLCD.invertText(true);
-//  myGLCD.printNumI(Display[4], 2, 21);
-//  myGLCD.printNumI(Display[5], 8, 21);
-//  myGLCD.invertText(false);
-//
-// Pfeile malen
-//  Pfeil(66, 0, 0);
-//  Pfeil(70, 6 ,0);
-//  Pfeil(72, 12 ,0);
-//  Pfeil(73, 18, 1);
-//  Pfeil(73, 24, 1); 
-//  Pfeil(72, 30 ,1); 
-//  Pfeil(70, 36, 1); 
-//  Pfeil(66, 42, 1);
-//  myGLCD.update();
-///// Ende Rundes Design
+  myGLCD.drawLine(2,20,14,20);
+
+ // Magazine
+ myGLCD.setFont(TinyFont);
+ myGLCD.printNumI(Display[0], 12, 0);
+ myGLCD.printNumI(Display[1], 17, 0);
+ myGLCD.printNumI(Display[8], 12, 43);
+ myGLCD.printNumI(Display[9], 17, 43);
+
+ myGLCD.printNumI(Display[2], 6, 11);
+ myGLCD.printNumI(Display[3], 11, 11);
+ myGLCD.printNumI(Display[6], 6, 32);
+ myGLCD.printNumI(Display[7], 11, 32);
+
+
+  myGLCD.setFont(SmallFont);
+  myGLCD.invertText(true);
+  myGLCD.printNumI(Display[4], 2, 21);
+  myGLCD.printNumI(Display[5], 8, 21);
+  myGLCD.invertText(false);
+  Pfeilanzahl();
+  myGLCD.update();
+/// Ende Rundes Design
 
 }
 
@@ -433,6 +446,28 @@ void AnzeigeNeu()
 //  5 x x         x x 5
 //    0 1 2 3 4 5 6 7
 //
+  }
+
+//Anzeigen der Pfeile und überprüfen ob gefüllt werden soll oder nicht 
+void Pfeilanzahl(){
+  Batteriedifferenz = Batteriemax - Batteriemin;
+  Pfeilgroesse = Batteriedifferenz / 7;
+  
+  for (int i = 0; i < 8; i = i + 1){
+    
+      Pfeilbatteriegroesse = (Pfeilgroesse * i) + Batteriemin;
+    
+  if (Pfeilbatteriegroesse > VOLT){
+    Pfeil(XBatteriePfeil[i],YBatteriePfeil[i],0);
+  } else {
+    Pfeil(XBatteriePfeil[i],YBatteriePfeil[i],1);
+  } 
+ }
+}
+
+//Positionen der Unterschiedlichen Pfeile setzen 
+
+
 void Pfeil(int A, int B, int V) // A = X-Koordinate B = Y-Koordinate C = 1 = Voll / 0 = Leer
 {
   if(V == 0) // leerer Pfeil
@@ -496,6 +531,19 @@ void longPress2() {
 
 void longPressStop2() {
   Serial.println("Button 2 longPress stop");
+  Displaymod = Displaymod + 1;
+  if (Displaymod > Displaymodi){
+    Displaymod = 1;
+  }
+//  if (Displaymodus == 1){
+//    Displaymodus = 2;
+//  }else {
+//    Displaymodus = 1;
+//  }
+  myGLCD.clrScr();
+  myGLCD.update();
+  UpdateDisplay = 1;
+  //Serial.println(Displaymodus);
 } // longPressStop2
 
 
