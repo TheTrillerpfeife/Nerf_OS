@@ -89,8 +89,8 @@ int Displaymodi = 3; // Anzahl an verschiedener Diyplaymodi 1=Eckiger Displaymod
 int Displaymod = 1;
 
 //Parameter für die Batteriepfeile im Runden Displaymodus
-const float Batteriemin = 7.2;
-const float Batteriemax = 8.4;
+const float Batteriemin = 5;//7.2
+const float Batteriemax = 7;//8.4
 float Batteriedifferenz = 0;
 float Pfeilbatteriegroesse = 0;
 float Pfeilgroesse = 0;
@@ -163,7 +163,7 @@ void loop()
   LEDGelb(); //Aufruf der Routine für die Gelbe LED
   
   
-  //  Debug(); ///Serielle Ausgabe für Infos im Standard auskommentiert, da sehr Performance lastig
+  // Debug(); ///Serielle Ausgabe für Infos im Standard auskommentiert, da sehr Performance lastig
 
 
 }
@@ -388,9 +388,12 @@ void AnzeigeNeu()
 
   //Abfrage nach dem gewünschten Diplaymodus
   }if (Displaymod == 2)// Runder Displaymodus
-  
   { 
-    
+  if (Clearcounter == 1)
+  {
+    myGLCD.clrScr(); 
+     myGLCD.update(); 
+  }
     // Start Rundes design
   if (Drin == 0)
   {
@@ -431,6 +434,51 @@ void AnzeigeNeu()
   Pfeilanzahl();
   myGLCD.update();
 /// Ende Rundes Design
+if (Displaymod == 3){
+  myGLCD.clrScr();
+
+//  myGLCD.print("Sensorwert Helligkeit = " );
+//  myGLCD.println(HELLIGKEIT);
+//  myGLCD.print("Sensorwert HelligkeitREF = " );
+//  myGLCD.println(HELLIGKEITREF);
+//  myGLCD.print("Volt = ");
+//  myGLCD.println(VOLT);
+//  myGLCD.print("Mag = ");
+//  myGLCD.println(Mag);
+//  myGLCD.print("Ammo = ");
+//  myGLCD.println(AMMO);
+//  myGLCD.print("Warnung ab ");
+//  myGLCD.println((((Display[4] * 10) + Display[5]) * WarnungGelb ));
+//  myGLCD.print("Ammo Kalk = ");
+//  myGLCD.println((Display[4] * 10) + Display[5]);
+//  myGLCD.print("Dispaly Array = ");
+//  myGLCD.print(Display[0]);
+//  myGLCD.print(";");
+//  myGLCD.print(Display[1]);
+//  myGLCD.print(";");
+//  myGLCD.print(Display[2]);
+//  myGLCD.print(";");
+//  myGLCD.print(Display[3]);
+//  myGLCD.print(";");
+//  myGLCD.print(Display[4]);
+//  myGLCD.print(";");
+//  myGLCD.print(Display[5]);
+//  myGLCD.print(";");
+//  myGLCD.print(Display[6]);
+//  myGLCD.print(";");
+//  myGLCD.print(Display[7]);
+//  myGLCD.print(";");
+//  myGLCD.print(Display[8]);
+//  myGLCD.print(";");
+//  myGLCD.println(Display[9]);
+//  myGLCD.print("Leer = ");
+//  myGLCD.println(Leer);
+//  myGLCD.print("BlinkRot = ");
+//  myGLCD.println(BlinkRot);
+  
+  myGLCD.update();
+  
+}
 
 }
 
@@ -629,7 +677,7 @@ void Debug() // Ausgabe aller Wert im SerialMonitor
   Serial.println(Leer);
   Serial.print("BlinkRot = ");
   Serial.println(BlinkRot);
-  //delay(100);
+  delay(10000);
 
 }
 
